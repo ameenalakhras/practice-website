@@ -1,0 +1,82 @@
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from rest_framework import serializers, status
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.translation import ugettext_lazy as _
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    password = serializers.CharField(write_only=True)
+    default_error_messages = {
+        'weak_password': _('You need a stronger Password'),
+    }
+
+    def create(self, validated_data):
+
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email'],
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+
+        return user
+
+    def validate(self, attrs):
+        try:
+            validate_password(attrs['password'])
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(
+                detail=self.default_error_messages['weak_password'],
+                code=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+        else:
+            attrs['password'] = make_password(attrs['password'])
+            return attrs
+
+    class Meta:
+        model = User
+        fields = ("id", "username", "password", "email")
+
+
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True)
+
+    default_error_messages = {
+        'inactive_account': _('User account is disabled.'),
+        'invalid_credentials': _('Unable to login with provided credentials.')
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(UserLoginSerializer, self).__init__(*args, **kwargs)
+        self.user = None
+
+    def validate(self, attrs):
+        try:
+            self.user = User.objects.get(username=attrs.get("username"))
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                detail=self.error_messages['invalid_credentials'],
+                code=status.HTTP_401_UNAUTHORIZED
+            )
+        else:
+            if not self.user.is_active:
+                raise serializers.ValidationError(
+                    detail=self.error_messages['inactive_account'],
+                    code=status.HTTP_401_UNAUTHORIZED
+                )
+
+            self.user = authenticate(username=attrs.get("username"), password=attrs.get('password'))
+            if self.user:
+                return attrs
+
+            else:
+                raise serializers.ValidationError(
+                    detail=self.error_messages['invalid_credentials'],
+                    code=status.HTTP_401_UNAUTHORIZED
+                )
+

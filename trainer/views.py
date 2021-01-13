@@ -36,7 +36,7 @@ class TrainingRequestObjectViewSet(UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         user = request.user
         if user == self.get_object().trainer.user:
-            response = super(TrainingRequestObjectViewSet, self).patch(self, request, *args, **kwargs)
+            response = super(TrainingRequestObjectViewSet, self).patch(request, *args, **kwargs)
             if response.status_code == 200:
                 send_training_push_notification_update(updated_status=self.get_object().accepted)
             return response

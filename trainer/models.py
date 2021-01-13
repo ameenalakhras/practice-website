@@ -7,7 +7,7 @@ from trainer.utils import send_training_request_push_notification
 
 
 class Trainer(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="media_publisher")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="media_publisher")
     trainees = models.ManyToManyField(Trainee, related_name="trainer_objects")
 
 

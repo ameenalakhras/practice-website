@@ -38,7 +38,7 @@ class TrainingRequestObjectViewSet(UpdateAPIView):
         if user == self.get_object().trainer.user:
             response = super(TrainingRequestObjectViewSet, self).patch(request, *args, **kwargs)
             if response.status_code == 200:
-                send_training_push_notification_update(updated_status=self.get_object().accepted)
+                send_training_push_notification_update(training_request=self.get_object(), updated_status=self.get_object().accepted)
             return response
         else:
             return Response(data={"message": "you're not authorized to do this request."},

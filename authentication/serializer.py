@@ -40,7 +40,6 @@ class UserSerializer(serializers.ModelSerializer):
                 code=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
 
-        attrs['password'] = make_password(attrs['password'])
         return attrs
 
     class Meta:

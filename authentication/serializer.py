@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
+from authentication.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers, status
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -48,8 +48,38 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "password", "email")
 
 
+class UserTraineeLoginSerializer(serializers.Serializer):
+    email = serializers.CharField(required=True)
+
+    default_error_messages = {
+        'inactive_account': _('User account is disabled.'),
+        'invalid_credentials': _('Unable to login with provided credentials.')
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(UserTraineeLoginSerializer, self).__init__(*args, **kwargs)
+        self.user = None
+
+    def validate(self, attrs):
+        try:
+            self.user = User.objects.get(email=attrs.get("email"))
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                detail=self.error_messages['invalid_credentials'],
+                code=status.HTTP_401_UNAUTHORIZED
+            )
+        else:
+            if not self.user.is_active:
+                raise serializers.ValidationError(
+                    detail=self.error_messages['inactive_account'],
+                    code=status.HTTP_401_UNAUTHORIZED
+                )
+
+        return attrs
+
+
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
+    email = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
 
     default_error_messages = {
@@ -63,7 +93,7 @@ class UserLoginSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         try:
-            self.user = User.objects.get(username=attrs.get("username"))
+            self.user = User.objects.get(email=attrs.get("email"))
         except User.DoesNotExist:
             raise serializers.ValidationError(
                 detail=self.error_messages['invalid_credentials'],

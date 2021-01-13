@@ -12,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     default_error_messages = {
         'weak_password': _('You need a stronger Password'),
+        "small_username": _('You need a longer username')
     }
 
     def create(self, validated_data):
@@ -33,9 +34,14 @@ class UserSerializer(serializers.ModelSerializer):
                 detail=self.default_error_messages['weak_password'],
                 code=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
-        else:
-            attrs['password'] = make_password(attrs['password'])
-            return attrs
+        if len(attrs['username']) < 4:
+            raise serializers.ValidationError(
+                detail=self.default_error_messages['small_username'],
+                code=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+
+        attrs['password'] = make_password(attrs['password'])
+        return attrs
 
     class Meta:
         model = User

@@ -22,6 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
+FCM_API_KEY = os.getenv("FCM_API_KEY")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -43,7 +45,8 @@ INSTALLED_APPS = [
 
     "authentication",
     "trainer",
-    "trainee"
+    "trainee",
+    "fcm_service"
 
 ]
 

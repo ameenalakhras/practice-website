@@ -21,5 +21,6 @@ urlpatterns = [
     path("", include("authentication.urls")),
     path("", include("trainer.urls")),
     path("", include("trainee.urls")),
+    path("", include("fcm_service.urls")),
 
 ]

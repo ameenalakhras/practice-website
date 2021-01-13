@@ -106,7 +106,7 @@ class UserLoginSerializer(serializers.Serializer):
                     code=status.HTTP_401_UNAUTHORIZED
                 )
 
-            self.user = authenticate(username=attrs.get("username"), password=attrs.get('password'))
+            self.user = authenticate(email=attrs.get("email"), password=attrs.get('password'))
             if self.user:
                 return attrs
 
